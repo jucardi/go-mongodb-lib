@@ -1,4 +1,4 @@
-package mgo
+package migrator
 
 import (
 	"crypto/md5"

@@ -1,4 +1,4 @@
-package mgo
+package migrator
 
 import (
 	"github.com/jucardi/go-mongodb-lib/mgo"

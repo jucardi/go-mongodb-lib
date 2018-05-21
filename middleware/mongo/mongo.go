@@ -4,6 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jucardi/go-mongodb-lib/log"
 	"github.com/jucardi/go-mongodb-lib/mgo"
+	"github.com/sirupsen/logrus"
+	"github.com/jucardi/go-mongodb-lib/migrator"
 )
 
 const (
@@ -30,6 +32,27 @@ func Use(router gin.IRoutes, url string) gin.IRoutes {
 	return router.Use(CreateHandler(url))
 }
 
+// // UseWithMigration like UseMongo, but enables reading the migration directory for migration scripts,
+// // and ensures the DB is up to date with these scripts. If the contents on one previously migrated script
+// // is changed, it will panic because of the integrity of the db would have been compromised.
+// //
+// // {mongoUrl}            - the mongo connection url.
+// // {migrationDir}        - the directory where the migration scripts are stored.
+// // {failOnOrderMismatch} - guarantees the alphabetical order of script execution. If a new script is added
+// //                         and by alphabetical order falls before a script that has been previously migrated
+// //                         the migration will fail if this flag is set to 'true'
+func UseWithMigration(router gin.IRoutes, mongoUrl, migrationDir string, failOnOrderMismatch bool) gin.IRoutes {
+	h := Use(router, mongoUrl)
+	s, db := GetDb()
+
+	defer s.Close()
+	if err := migrator.Migrate(migrationDir, db, failOnOrderMismatch); err != nil {
+		logrus.Fatalf("An error occurred while migrating data. %s", err.Error())
+	}
+
+	return h
+}
+
 // CreateHandler associates the specified mongo url which is used to connect to MongoDB
 // A gin handler is returned which can be applied to middleware to start and end sessions
 // to mongo on every request.
@@ -49,27 +72,6 @@ func CreateHandler(url string) gin.HandlerFunc {
 
 	return dbCtx.handler
 }
-
-// // UseMongoWithMigration like UseMongo, but enables reading the migration directory for migration scripts,
-// // and ensures the DB is up to date with these scripts. If the contents on one previously migrated script
-// // is changed, it will panic because of the integrity of the db would have been compromised.
-// //
-// // {mongoUrl}            - the mongo connection url.
-// // {migrationDir}        - the directory where the migration scripts are stored.
-// // {failOnOrderMismatch} - guarantees the alphabetical order of script execution. If a new script is added
-// //                         and by alphabetical order falls before a script that has been previously migrated
-// //                         the migration will fail if this flag is set to 'true'
-// func UseMongoWithMigration(mongoUrl, migrationDir string, failOnOrderMismatch bool) gin.HandlerFunc {
-// 	h := UseMongo(mongoUrl)
-// 	s, db := GetDb()
-
-// 	defer s.Close()
-// 	if err := mongo.Migrate(migrationDir, db, failOnOrderMismatch); err != nil {
-// 		logrus.Fatalf("An error occurred while migrating data. %s", err.Error())
-// 	}
-
-// 	return h
-// }
 
 // Session returns a pointer to the global Mongo session
 func Session() mgo.ISession {
@@ -114,10 +116,10 @@ func Get(c *gin.Context) *DBStore {
 	return db
 }
 
-// Database returns a database from the current session which can be used
+// DB returns a database from the current session which can be used
 // for queries.  It will automatically be closed when the current request
 // completes by the middleware handler
-func (d *DBStore) Database() mgo.IDatabase {
+func (d *DBStore) DB() mgo.IDatabase {
 	return d.db
 }
 
