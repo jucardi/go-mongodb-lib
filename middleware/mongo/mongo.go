@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jucardi/go-mongodb-lib/log"
 	"github.com/jucardi/go-mongodb-lib/mgo"
-	"github.com/sirupsen/logrus"
 	"github.com/jucardi/go-mongodb-lib/migrator"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -28,21 +28,21 @@ var currentContext *context
 // every context created by the router.
 //
 // {url} - the url connection string for the mongodb instance.
-func Use(router gin.IRoutes, url string) gin.IRoutes {
+func Use(router gin.IRouter, url string) gin.IRoutes {
 	return router.Use(CreateHandler(url))
 }
 
-// // UseWithMigration like UseMongo, but enables reading the migration directory for migration scripts,
-// // and ensures the DB is up to date with these scripts. If the contents on one previously migrated script
-// // is changed, it will panic because of the integrity of the db would have been compromised.
-// //
-// // {mongoUrl}            - the mongo connection url.
-// // {migrationDir}        - the directory where the migration scripts are stored.
-// // {failOnOrderMismatch} - guarantees the alphabetical order of script execution. If a new script is added
-// //                         and by alphabetical order falls before a script that has been previously migrated
-// //                         the migration will fail if this flag is set to 'true'
-func UseWithMigration(router gin.IRoutes, mongoUrl, migrationDir string, failOnOrderMismatch bool) gin.IRoutes {
-	h := Use(router, mongoUrl)
+// UseWithMigration like UseMongo, but enables reading the migration directory for migration scripts,
+// and ensures the DB is up to date with these scripts. If the contents on one previously migrated script
+// is changed, it will panic because of the integrity of the db would have been compromised.
+//
+// {mongoURL}            - the mongo connection url.
+// {migrationDir}        - the directory where the migration scripts are stored.
+// {failOnOrderMismatch} - guarantees the alphabetical order of script execution. If a new script is added
+//                         and by alphabetical order falls before a script that has been previously migrated
+//                         the migration will fail if this flag is set to 'true'
+func UseWithMigration(router gin.IRouter, mongoURL, migrationDir string, failOnOrderMismatch bool) gin.IRoutes {
+	h := Use(router, mongoURL)
 	s, db := GetDb()
 
 	defer s.Close()
