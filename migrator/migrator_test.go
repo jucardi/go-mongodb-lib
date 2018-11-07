@@ -1,12 +1,13 @@
 package migrator
 
 import (
+	"errors"
+	"testing"
+
 	"github.com/jucardi/go-mongodb-lib/mgo"
 	"github.com/jucardi/go-mongodb-lib/testutils"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/mgo.v2/bson"
-	"testing"
 )
 
 const migrationPath = "./test_assets/db_migration"

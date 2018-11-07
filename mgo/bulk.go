@@ -33,29 +33,36 @@ type IBulk interface {
 	// out of order, which means latter operations may proceed
 	// even if prior ones have failed.
 	Unordered() IBulk
+
 	// Insert queues up the provided documents for insertion.
 	Insert(docs ...interface{}) IBulk
+
 	// Remove queues up the provided selectors for removing matching documents.
 	// Each selector will remove only a single matching document.
 	Remove(selectors ...interface{}) IBulk
+
 	// RemoveAll queues up the provided selectors for removing all matching documents.
 	// Each selector will remove all matching documents.
 	RemoveAll(selectors ...interface{}) IBulk
+
 	// Update queues up the provided pairs of updating instructions.
 	// The first element of each pair selects which documents must be
 	// updated, and the second element defines how to update it.
 	// Each pair matches exactly one document for updating at most.
 	Update(pairs ...interface{}) IBulk
+
 	// UpdateAll queues up the provided pairs of updating instructions.
 	// The first element of each pair selects which documents must be
 	// updated, and the second element defines how to update it.
 	// Each pair updates all documents matching the selector.
 	UpdateAll(pairs ...interface{}) IBulk
+
 	// Upsert queues up the provided pairs of upserting instructions.
 	// The first element of each pair selects which documents must be
 	// updated, and the second element defines how to update it.
 	// Each pair matches exactly one document for updating at most.
 	Upsert(pairs ...interface{}) IBulk
+
 	// Run runs all the operations queued up.
 	//
 	// If an error is reported on an unordered bulk operation, the error value may

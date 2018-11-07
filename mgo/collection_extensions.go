@@ -10,7 +10,8 @@ type ICollectionExtensions interface {
 	// the provided parameters if necessary.  If the index fails then this call
 	// exists as a Fatal
 	//
-	// {index} - the index in Bson form
+	//   {index} - the index in Bson form
+	//
 	MustEnsureIndex(index Index)
 
 	// BulkUpsert allows multiple Upsert operations. Queues up the provided pairs of upserting instructions.
@@ -25,7 +26,8 @@ type ICollectionExtensions interface {
 // the provided parameters if necessary.  If the index fails then this call
 // exists as a Fatal
 //
-// {index} - the index in Bson form
+//   {index} - the index in Bson form
+//
 func (c *collection) MustEnsureIndex(index Index) {
 	if err := c.EnsureIndex(index); err != nil {
 		log.Get().Fatal(err)

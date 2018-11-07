@@ -1,8 +1,9 @@
 package mgo
 
 import (
-	"gopkg.in/mgo.v2"
 	"time"
+
+	"gopkg.in/mgo.v2"
 )
 
 // NewQuery creates an instance of IQuery with the given *mgo.Query if passed as an arg.

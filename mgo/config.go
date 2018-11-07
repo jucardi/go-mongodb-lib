@@ -8,11 +8,11 @@ import (
 type GlobalConfig struct {
 	// DialMaxRetries defines the maximum amount of retries to attempt when dialing to a
 	// connection to a mongodb instance
-	DialMaxRetries int `json:"dial_max_retries"`
+	DialMaxRetries int `json:"dial_max_retries" yaml:"dial_max_retries"`
 
 	// DialRetryTimeout defines the timeout in milliseconds between retries when dialing
 	// for a connection to a mongodb instance.
-	DialRetryTimeout time.Duration `json:"dial_retry_timeout"`
+	DialRetryTimeout time.Duration `json:"dial_retry_timeout" yaml:"dial_max_retries"`
 }
 
 var instance *GlobalConfig

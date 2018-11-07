@@ -4,11 +4,8 @@ import "gopkg.in/mgo.v2"
 
 // NewDatabase creates an instance of IDatabase with the given *mgo.Database if passed as an arg.
 // Note: The IDatabase instance returned will not work without a valid *mgo.Database.
-func NewDatabase(db ...*mgo.Database) IDatabase {
-	if len(db) > 0 {
-		return &database{Database: db[0]}
-	}
-	return &database{}
+func NewDatabase(db *mgo.Database) IDatabase {
+	return &database{Database: db}
 }
 
 // IDatabase is an interface which matches the contract for the `Database` struct in `gopkg.in/mgo.v2` package. The function documentation has been narrowed from the original

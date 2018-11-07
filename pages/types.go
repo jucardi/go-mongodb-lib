@@ -2,10 +2,11 @@ package pages
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"math"
 	"reflect"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Page encapsulates the essential information required to request a subset of a result set.
@@ -63,7 +64,7 @@ func CreateFromContext(c *gin.Context, defaultPage ...*Page) (ret *Page) {
 func CreatePaginated(p *Page, array interface{}, count ...int) (*Paginated, error) {
 	resultv := reflect.ValueOf(array)
 	if resultv.Kind() != reflect.Ptr || resultv.Elem().Kind() != reflect.Slice && resultv.Kind() != reflect.Array {
-		fmt.Errorf("unable to create Paginated, 'array' arg must be a Slice or Array, %v", resultv.Kind())
+		return nil, fmt.Errorf("unable to create Paginated, 'array' arg must be a Slice or Array, %v", resultv.Kind())
 	}
 
 	arr := resultv.Elem()

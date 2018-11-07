@@ -1,16 +1,12 @@
 package log
 
-import "github.com/jucardi/go-logger-lib/log"
+import "gopkg.in/jucardi/go-logger-lib.v1/log"
 
-// For more information about how the loggin works in the github.com/jucardi/go-logger-lib/log
+// For more information about how the logger works in the github.com/jucardi/go-logger-lib/log
 // package, please refer to https://github.com/jucardi/go-logger-lib/blob/master/README.md
 
 // LoggerMgo defines the name for the logger used for the mgo package
 const LoggerMgo = "mgo"
-
-func init() {
-	Set(log.Get(log.LoggerLogrus))
-}
 
 // Get returns the current logger instance
 func Get() log.ILogger {
@@ -24,5 +20,5 @@ func Set(logger log.ILogger) {
 
 // Disable disables logging for the mgo package by assigning a the nil implementation of ILogger
 func Disable() {
-	Set(log.Get(log.LoggerNil))
+	Set(log.NewNil())
 }

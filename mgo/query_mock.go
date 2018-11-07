@@ -2,11 +2,12 @@ package mgo
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/jucardi/go-mongodb-lib/pages"
 	"github.com/jucardi/go-mongodb-lib/testutils"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 // TODO: Handle conditionals on arguments to support more use cases when testing. Add all IQuery methods.

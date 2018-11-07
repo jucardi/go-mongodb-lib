@@ -4,16 +4,17 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"github.com/jucardi/go-mongodb-lib/log"
-	"github.com/jucardi/go-mongodb-lib/mgo"
-	"github.com/jucardi/go-osx/paths"
-	"github.com/jucardi/go-streams/streams"
-	"gopkg.in/mgo.v2/bson"
 	"io"
 	"io/ioutil"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/jucardi/go-mongodb-lib/log"
+	"github.com/jucardi/go-mongodb-lib/mgo"
+	"gopkg.in/jucardi/go-osx.v1/paths"
+	"gopkg.in/jucardi/go-streams.v1/streams"
+	"gopkg.in/mgo.v2/bson"
 )
 
 const (
