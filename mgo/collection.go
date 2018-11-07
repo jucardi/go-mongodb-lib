@@ -6,7 +6,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-// NewBulk creates an instance of ICollection with the given *mgo.Collection if passed as an arg.
+// NewCollection creates an instance of ICollection with the given *mgo.Collection if passed as an arg.
 // Note: The ICollection instance returned will not work without a valid *mgo.Collection.
 func NewCollection(col ...*mgo.Collection) ICollection {
 	if len(col) > 0 {
@@ -109,7 +109,7 @@ type ICollection interface {
 	// Bulk returns a value to prepare the execution of a bulk operation.
 	Bulk() IBulk
 
-	// Returns the internal mgo.collection used by this implementation.
+	// C returns the internal mgo.collection used by this implementation.
 	C() *mgo.Collection
 }
 
