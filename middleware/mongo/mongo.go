@@ -28,7 +28,7 @@ var currentContext *context
 //
 //   {url} - the url connection string for the mongodb instance.
 //
-func Use(router gin.IRouter, url string) gin.IRoutes {
+func Use(router gin.IRoutes, url string) gin.IRoutes {
 	return router.Use(CreateHandler(url))
 }
 
@@ -42,7 +42,7 @@ func Use(router gin.IRouter, url string) gin.IRoutes {
 //                           and by alphabetical order falls before a script that has been previously migrated
 //                           the migration will fail if this flag is set to 'true'
 //
-func UseWithMigration(router gin.IRouter, mongoURL, migrationDir string, failOnOrderMismatch bool) gin.IRoutes {
+func UseWithMigration(router gin.IRoutes, mongoURL, migrationDir string, failOnOrderMismatch bool) gin.IRoutes {
 	h := Use(router, mongoURL)
 	s, db := GetDb()
 
