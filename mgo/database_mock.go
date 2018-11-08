@@ -2,19 +2,13 @@ package mgo
 
 import (
 	"encoding/json"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 // TODO: Improve functionality like QueryMock
 
-type WhenHandler func(*testing.T, ...interface{}) []interface{}
-
 // DatabaseMock is a mock of IDatabase
 type DatabaseMock struct {
 	IDatabase
-	t           *testing.T
 	collections map[string]ICollection
 	runMocks    map[string]error
 	times       map[string]int
@@ -22,12 +16,10 @@ type DatabaseMock struct {
 
 // MockDb returns a new instance of IDatabase for mocking purposes
 //
-//   {t}:    The instance of *testing.T used in the test
 //   {db}:   An optional instance of IDatabase to handle real calls if wanted.
 //
-func MockDb(t *testing.T, db ...IDatabase) *DatabaseMock {
+func MockDb(db ...IDatabase) *DatabaseMock {
 	ret := &DatabaseMock{
-		t:           t,
 		collections: make(map[string]ICollection),
 		runMocks:    make(map[string]error),
 		times:       make(map[string]int),
@@ -46,8 +38,8 @@ func (m *DatabaseMock) WhenRun(cmd interface{}, output error) {
 	m.runMocks[getKey(cmd)] = output
 }
 
-func (m *DatabaseMock) Times(funcName string, expected int) {
-	assert.Equal(m.t, expected, m.times[funcName], "Mismatch count for method '%s'", funcName)
+func (m *DatabaseMock) Times(funcName string) int {
+	return m.times[funcName]
 }
 
 func (m *DatabaseMock) Clear(funcName string) {

@@ -1,17 +1,10 @@
 package mgo
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
-
 // TODO: Improve functionality like QueryMock
 
 // CollectionMock: Is the mock struct use for ICollection mocking.
 type CollectionMock struct {
 	ICollection
-	t           *testing.T
 	findMocks   map[string]IQuery
 	insertMocks map[string]error
 	times       map[string]int
@@ -22,9 +15,8 @@ type CollectionMock struct {
 //   {t}:    The instance of *testing.T used in the test
 //   {col}:  An optional instance of ICollection to handle real calls if wanted.
 //
-func MockCollection(t *testing.T, col ...ICollection) *CollectionMock {
+func MockCollection(col ...ICollection) *CollectionMock {
 	ret := &CollectionMock{
-		t:           t,
 		findMocks:   make(map[string]IQuery),
 		insertMocks: make(map[string]error),
 		times:       make(map[string]int),
@@ -43,8 +35,8 @@ func (m *CollectionMock) WhenInsert(docs interface{}, output error) {
 	m.insertMocks[getKey(docs)] = output
 }
 
-func (m *CollectionMock) Times(funcName string, expected int) {
-	assert.Equal(m.t, expected, m.times[funcName], "Mismatch count for method '%s'", funcName)
+func (m *CollectionMock) Times(funcName string) int {
+	return m.times[funcName]
 }
 
 func (m *CollectionMock) Clear(funcName string) {

@@ -171,6 +171,10 @@ func (s *session) FindRef(ref *mgo.DBRef) IQuery {
 	return fromQuery(s.S().FindRef(ref))
 }
 
+func (s *session) LogoutAll() {
+	println("SUCCESS!!!")
+}
+
 func fromSession(s *mgo.Session) ISession {
 	if s == nil {
 		return nil

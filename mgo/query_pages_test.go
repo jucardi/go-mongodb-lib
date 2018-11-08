@@ -11,38 +11,38 @@ import (
 )
 
 func TestQuery_Page_NoSort(t *testing.T) {
-	q := MockQuery(t)
+	q := MockQuery()
 
 	q.When("Page", makePageHandler(q))
-	q.BulkTimes([]string{"Sort", "Skip", "Limit"}, []int{0, 0, 0})
+	assert.NoError(t, q.BulkTimes([]string{"Sort", "Skip", "Limit"}, []int{0, 0, 0}))
 
 	page := &pages.Page{Page: 1, Size: 10}
 	q.Page(page)
 
-	q.BulkTimes([]string{"Sort", "Skip", "Limit"}, []int{0, 1, 1})
+	assert.NoError(t, q.BulkTimes([]string{"Sort", "Skip", "Limit"}, []int{0, 1, 1}))
 }
 
 func TestQuery_Page_Sort(t *testing.T) {
-	q := MockQuery(t)
+	q := MockQuery()
 
 	q.When("Page", makePageHandler(q))
-	q.BulkTimes([]string{"Sort", "Skip", "Limit"}, []int{0, 0, 0})
+	assert.NoError(t, q.BulkTimes([]string{"Sort", "Skip", "Limit"}, []int{0, 0, 0}))
 
 	page := &pages.Page{Page: 1, Size: 10, Sort: []string{"name", "other"}}
 	q.Page(page)
 
-	q.BulkTimes([]string{"Sort", "Skip", "Limit"}, []int{1, 1, 1})
+	assert.NoError(t, q.BulkTimes([]string{"Sort", "Skip", "Limit"}, []int{1, 1, 1}))
 }
 
 func TestQuery_Page_NoPage(t *testing.T) {
-	q := MockQuery(t)
+	q := MockQuery()
 
 	q.When("Page", makePageHandler(q))
-	q.BulkTimes([]string{"Sort", "Skip", "Limit"}, []int{0, 0, 0})
+	assert.NoError(t, q.BulkTimes([]string{"Sort", "Skip", "Limit"}, []int{0, 0, 0}))
 
 	q.Page()
 
-	q.BulkTimes([]string{"Sort", "Skip", "Limit"}, []int{0, 0, 0})
+	assert.NoError(t, q.BulkTimes([]string{"Sort", "Skip", "Limit"}, []int{0, 0, 0}))
 }
 
 type testObj struct {
@@ -59,9 +59,9 @@ func TestQuery_WrapPage_Success_NoSort(t *testing.T) {
 	page := &pages.Page{Page: 1, Size: 10}
 	count := 100
 	totalPages := int(math.Ceil(float64(count) / float64(page.Size)))
-	q := MockQuery(t)
+	q := MockQuery()
 
-	q.BulkTimes([]string{"Sort", "Skip", "Limit", "Count", "Page"}, []int{0, 0, 0, 0, 0})
+	assert.NoError(t, q.BulkTimes([]string{"Sort", "Skip", "Limit", "Count", "Page"}, []int{0, 0, 0, 0, 0}))
 	q.WhenReturn("Count", count, nil)
 	q.When("Page", makePageHandler(q))
 	q.When("WrapPage", makeWrapPageHandler(q))
@@ -70,7 +70,7 @@ func TestQuery_WrapPage_Success_NoSort(t *testing.T) {
 	var ret []*testObj
 
 	paginated, err := q.WrapPage(&ret, page)
-	q.BulkTimes([]string{"Sort", "Skip", "Limit", "Count", "Page"}, []int{0, 1, 1, 1, 1})
+	assert.NoError(t, q.BulkTimes([]string{"Sort", "Skip", "Limit", "Count", "Page"}, []int{0, 1, 1, 1, 1}))
 	assert.Nil(t, err)
 	assert.NotNil(t, paginated)
 
@@ -90,9 +90,9 @@ func TestQuery_WrapPage_Success_NoSort(t *testing.T) {
 
 func TestQuery_WrapPage_Success_NoPage(t *testing.T) {
 	count := 100
-	q := MockQuery(t)
+	q := MockQuery()
 
-	q.BulkTimes([]string{"Sort", "Skip", "Limit", "Count", "Page"}, []int{0, 0, 0, 0, 0})
+	assert.NoError(t, q.BulkTimes([]string{"Sort", "Skip", "Limit", "Count", "Page"}, []int{0, 0, 0, 0, 0}))
 	q.WhenReturn("Count", count, nil)
 	q.When("Page", makePageHandler(q))
 	q.When("WrapPage", makeWrapPageHandler(q))
@@ -101,7 +101,7 @@ func TestQuery_WrapPage_Success_NoPage(t *testing.T) {
 	var ret []*testObj
 
 	paginated, err := q.WrapPage(&ret)
-	q.BulkTimes([]string{"Sort", "Skip", "Limit", "Count", "Page"}, []int{0, 0, 0, 0, 0})
+	assert.NoError(t, q.BulkTimes([]string{"Sort", "Skip", "Limit", "Count", "Page"}, []int{0, 0, 0, 0, 0}))
 	assert.Nil(t, err)
 	assert.NotNil(t, paginated)
 
@@ -121,9 +121,9 @@ func TestQuery_WrapPage_Success_NoPage(t *testing.T) {
 
 func TestQuery_WrapPage_Fail_CountError(t *testing.T) {
 	page := &pages.Page{Page: 1, Size: 10}
-	q := MockQuery(t)
+	q := MockQuery()
 
-	q.BulkTimes([]string{"Sort", "Skip", "Limit", "Count", "Page"}, []int{0, 0, 0, 0, 0})
+	assert.NoError(t, q.BulkTimes([]string{"Sort", "Skip", "Limit", "Count", "Page"}, []int{0, 0, 0, 0, 0}))
 	q.WhenReturn("Count", 0, errors.New("forgot how to count"))
 	q.When("Page", makePageHandler(q))
 	q.When("WrapPage", makeWrapPageHandler(q))
@@ -141,9 +141,9 @@ func TestQuery_WrapPage_Fail_CountError(t *testing.T) {
 
 func TestQuery_WrapPage_Fail_AllError(t *testing.T) {
 	count := 100
-	q := MockQuery(t)
+	q := MockQuery()
 
-	q.BulkTimes([]string{"Sort", "Skip", "Limit", "Count", "Page"}, []int{0, 0, 0, 0, 0})
+	assert.NoError(t, q.BulkTimes([]string{"Sort", "Skip", "Limit", "Count", "Page"}, []int{0, 0, 0, 0, 0}))
 	q.WhenReturn("Count", count, nil)
 	q.When("Page", makePageHandler(q))
 	q.When("WrapPage", makeWrapPageHandler(q))
@@ -159,8 +159,8 @@ func TestQuery_WrapPage_Fail_AllError(t *testing.T) {
 	assert.Len(t, ret, 0)
 }
 
-func makePageHandler(q IQuery) WhenHandler {
-	return func(t *testing.T, args ...interface{}) []interface{} {
+func makePageHandler(q IQuery) testutils.WhenHandler {
+	return func(args ...interface{}) []interface{} {
 		var page *pages.Page
 		if len(args) > 0 && args[0] != nil {
 			page = args[0].(*pages.Page)
@@ -169,8 +169,8 @@ func makePageHandler(q IQuery) WhenHandler {
 	}
 }
 
-func makeWrapPageHandler(q IQuery) WhenHandler {
-	return func(t *testing.T, args ...interface{}) []interface{} {
+func makeWrapPageHandler(q IQuery) testutils.WhenHandler {
+	return func(args ...interface{}) []interface{} {
 		result := args[0]
 		var page *pages.Page
 		if len(args) > 1 && args[1] != nil {
@@ -180,8 +180,8 @@ func makeWrapPageHandler(q IQuery) WhenHandler {
 	}
 }
 
-func makeAllHandler(size int) WhenHandler {
-	return func(t *testing.T, args ...interface{}) []interface{} {
+func makeAllHandler(size int) testutils.WhenHandler {
+	return func(args ...interface{}) []interface{} {
 		result := args[0]
 		list := result.(*[]*testObj)
 

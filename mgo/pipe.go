@@ -26,7 +26,7 @@ type IPipe interface {
 	//     - See the Tail documentation in `gopkg.in/mgo.v2` for more information.
 	Explain(result interface{}) error
 	// AllowDiskUse enables writing to the "<dbpath>/_tmp" server directory so
-	// that aggregation pipelines do not have to be held entirely in memory.
+	// that aggregation pipelines exec not have to be held entirely in memory.
 	AllowDiskUse() IPipe
 	// Batch sets the batch size used when fetching documents from the database. It's possible to change this setting on a
 	// per-session basis as well, using the Batch method of Session.
