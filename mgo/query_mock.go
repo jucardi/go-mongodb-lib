@@ -89,4 +89,3 @@ func (m *QueryMock) Count() (int, error) {
 func (m *QueryMock) All(result interface{}) error {
 	return m.returnError("All", result)
 }
-
