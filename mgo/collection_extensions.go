@@ -32,7 +32,7 @@ func (c *collection) MustEnsureIndex(index Index) {
 	if err := c.EnsureIndex(index); err != nil {
 		log.Get().Fatal(err)
 	} else {
-		log.Get().Infof("collection [%s] index is up to date", c.Name)
+		log.Get().Infof("collection [%s] index is up to date", c.Name())
 	}
 }
 
