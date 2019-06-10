@@ -1,6 +1,7 @@
 package mgo
 
 import (
+	"fmt"
 	"github.com/jucardi/go-mongodb-lib/log"
 )
 
@@ -30,9 +31,10 @@ type ICollectionExtensions interface {
 //
 func (c *collection) MustEnsureIndex(index Index) {
 	if err := c.EnsureIndex(index); err != nil {
-		log.Get().Fatal(err)
+		log.Get().Error(err)
+		panic(err)
 	} else {
-		log.Get().Infof("collection [%s] index is up to date", c.Name())
+		log.Get().Info(fmt.Sprintf("collection [%s] index is up to date", c.Name()))
 	}
 }
 

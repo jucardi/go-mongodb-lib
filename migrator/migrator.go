@@ -83,7 +83,7 @@ func Migrate(dataDir string, db mgo.IDatabase, failOnOrderMismatch bool) *Migrat
 			continue
 		}
 
-		log.Get().Infof("Migrating file '%s'", f.Name())
+		log.Get().Info(fmt.Sprintf("Migrating file '%s'", f.Name()))
 		fullPath := paths.Combine(dataDir, f.Name())
 		hash, hashErr := computeHash(fullPath)
 
@@ -117,7 +117,7 @@ func Migrate(dataDir string, db mgo.IDatabase, failOnOrderMismatch bool) *Migrat
 					Code:    ErrHashingFailed,
 				}
 			} else {
-				log.Get().Infof("File '%s' previously migrated, continuing", f.Name())
+				log.Get().Info(fmt.Sprintf("File '%s' previously migrated, continuing", f.Name()))
 			}
 
 			continue

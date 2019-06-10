@@ -1,6 +1,7 @@
 package mgo
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/jucardi/go-mongodb-lib/log"
@@ -26,9 +27,9 @@ func Dial(url string) (ISession, error) {
 	s, err := mgo.Dial(url)
 
 	for i := 1; err != nil && i <= Config().DialMaxRetries; i++ {
-		log.Get().Errorf("Can't connect to mongo on '%s': %v. Retrying in %v", url, err, Config().DialRetryTimeout)
+		log.Get().Error(fmt.Sprintf("Can't connect to mongo on '%s': %v. Retrying in %v", url, err, Config().DialRetryTimeout))
 		time.Sleep(Config().DialRetryTimeout)
-		log.Get().Warnf("Retrying to connect to mongo, attempt %d of %d", i, Config().DialMaxRetries)
+		log.Get().Warn(fmt.Sprintf("Retrying to connect to mongo, attempt %d of %d", i, Config().DialMaxRetries))
 		s, err = mgo.Dial(url)
 	}
 
