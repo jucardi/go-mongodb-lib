@@ -52,10 +52,25 @@ type MigrationInfo struct {
 	Timestamp time.Time `json:"timestamp" bson:"timestamp"`
 }
 
-func Migrate(dataDir string, db mgo.IDatabase, failOnOrderMismatch bool) *MigrationError {
+// Migrate begins a DB migration process by migrating the scripts located in the provided data dir and storing the
+// migration track in a migration repository ('_migration' by default)
+//
+//    {dataDir}              - The location where the migration scripts are contained
+//    {db}                   - The database client already initialized
+//    {failOnOrderMismatch}  - Indicates whether the migration should fail if the order of previously migrated scripts
+//                             have failed (removing or adding scripts between previously migrated scripts)
+//    {collectionIdSuffix}   - (optional) A suffix to use for the collection name where the migration data is stored.
+//                             This is useful when sharing the same database instance with multiple services that own
+//                             their unique collections.
+//
+func Migrate(dataDir string, db mgo.IDatabase, failOnOrderMismatch bool, collectionIdSuffix ...string) *MigrationError {
 	var infos []*MigrationInfo
+	migrationCol := MigrationCollection
+	if len(collectionIdSuffix) > 0 && collectionIdSuffix[0] != "" {
+		migrationCol += "_" + collectionIdSuffix[0]
+	}
 
-	if err := db.C(MigrationCollection).Find(bson.M{}).Sort("filename").All(&infos); err != nil {
+	if err := db.C(migrationCol).Find(bson.M{}).Sort("filename").All(&infos); err != nil {
 		return &MigrationError{
 			Message: fmt.Sprintf("Unable to read Database info. %s", err.Error()),
 			Code:    ErrDbAccess | ErrDbOperation,
@@ -153,7 +168,7 @@ func Migrate(dataDir string, db mgo.IDatabase, failOnOrderMismatch bool) *Migrat
 			log.Get().Debug(resp)
 			info.Timestamp = time.Now()
 
-			if err := db.C(MigrationCollection).Insert(info); err != nil {
+			if err := db.C(migrationCol).Insert(info); err != nil {
 				return &MigrationError{
 					Message: fmt.Sprintf("Unable to save migration info for '%s'", info.ScriptId),
 					Code:    ErrDbAccess | ErrDbOperation,

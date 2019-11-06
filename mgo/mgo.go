@@ -29,10 +29,10 @@ var (
 func Dial(url string) (ISession, error) {
 	s, err := mgo.Dial(url)
 
-	for i := 1; err != nil && i <= Config().DialMaxRetries; i++ {
-		log.Get().Error(fmt.Sprintf("Can't connect to mongo on '%s': %v. Retrying in %v", url, err, Config().DialRetryTimeout))
-		time.Sleep(Config().DialRetryTimeout)
-		log.Get().Warn(fmt.Sprintf("Retrying to connect to mongo, attempt %d of %d", i, Config().DialMaxRetries))
+	for i := 1; err != nil && i <= DialMaxRetries; i++ {
+		log.Get().Error(fmt.Sprintf("Can't connect to mongo on '%s': %v. Retrying in %v", url, err, DialRetrySleep))
+		time.Sleep(DialRetrySleep)
+		log.Get().Warn(fmt.Sprintf("Retrying to connect to mongo, attempt %d of %d", i, DialMaxRetries))
 		s, err = mgo.Dial(url)
 	}
 
@@ -54,10 +54,10 @@ func DialWithTimeout(url string, timeout time.Duration) (ISession, error) {
 func DialWithInfo(info *mgo.DialInfo) (ISession, error) {
 	s, err := mgo.DialWithInfo(info)
 
-	for i := 1; err != nil && i <= Config().DialMaxRetries; i++ {
-		log.Get().Error(fmt.Sprintf("Can't connect to mongo on '%v': %v. Retrying in %v", info.Addrs, err, Config().DialRetryTimeout))
-		time.Sleep(Config().DialRetryTimeout)
-		log.Get().Warn(fmt.Sprintf("Retrying to connect to mongo, attempt %d of %d", i, Config().DialMaxRetries))
+	for i := 1; err != nil && i <= DialMaxRetries; i++ {
+		log.Get().Error(fmt.Sprintf("Can't connect to mongo on '%v': %v. Retrying in %v", info.Addrs, err, DialRetrySleep))
+		time.Sleep(DialRetrySleep)
+		log.Get().Warn(fmt.Sprintf("Retrying to connect to mongo, attempt %d of %d", i, DialMaxRetries))
 		s, err = mgo.DialWithInfo(info)
 	}
 
@@ -66,39 +66,89 @@ func DialWithInfo(info *mgo.DialInfo) (ISession, error) {
 
 // DialWithTls attempts to establish a MongoDB connection using TLS with the provided PEM encoded
 // certificate.
-func DialWithTls(url string, cert []byte) (ISession, error) {
+//
+//    {url}                 - The URL to dial to Mongo
+//    {cert}                - The PEM bytes of the CA cert to use for TLS
+//    {insecureSkipVerify}  - (optional) controls whether a client verifies the server's certificate
+//                            chain andhost name. If 'true', TLS accepts any certificate presented
+//                            by the server and any host name in that certificate. In this mode, TLS
+//                            is susceptible to man-in-the-middle attacks.  This should be used only
+//                            for testing.
+//
+func DialWithTls(url string, cert []byte, insecureSkipVerify ...bool) (ISession, error) {
 	rootCerts := x509.NewCertPool()
 	rootCerts.AppendCertsFromPEM(cert)
 
-	// --sslPEMKeyFile
-	var clientCerts []tls.Certificate
-	if cert, err := tls.LoadX509KeyPair("client.crt", "client.key"); err == nil {
-		clientCerts = append(clientCerts, cert)
+	var lastErr error
+
+	info, err := mgo.ParseURL(url)
+	if err != nil {
+		return nil, err
+	}
+	info.Timeout = DialTimeout
+	info.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
+		tlsCfg := &tls.Config{
+			RootCAs: rootCerts,
+		}
+		if len(insecureSkipVerify) > 0 && insecureSkipVerify[0] {
+			tlsCfg.InsecureSkipVerify = insecureSkipVerify[0]
+		}
+		conn, err := tls.Dial("tcp", addr.String(), tlsCfg)
+		if err != nil {
+			lastErr = err
+		}
+		return conn, err
 	}
 
-	// TLS dialer handler
-	fn := func() (*mgo.Session, error) {
-		return mgo.DialWithInfo(&mgo.DialInfo{
-			Addrs: []string{url},
-			DialServer: func(addr *mgo.ServerAddr) (net.Conn, error) {
-				return tls.Dial("tcp", addr.String(), &tls.Config{
-					RootCAs:      rootCerts,
-					Certificates: clientCerts,
-				})
-			},
-		})
-	}
 	// Dial with TLS
-	s, err := fn()
+	s, err := mgo.DialWithInfo(info)
 
-	for i := 1; err != nil && i <= Config().DialMaxRetries; i++ {
-		log.Get().Error(fmt.Sprintf("Can't connect to mongo on '%s': %v. Retrying in %v", url, err, Config().DialRetryTimeout))
-		time.Sleep(Config().DialRetryTimeout)
-		log.Get().Warn(fmt.Sprintf("Retrying to connect to mongo, attempt %d of %d", i, Config().DialMaxRetries))
-		s, err = fn()
+	for i := 1; err != nil && i <= DialMaxRetries; i++ {
+		if lastErr != nil {
+			err = lastErr
+			lastErr = nil
+		}
+		log.Get().Error(fmt.Sprintf("Can't connect to mongo on '%s': %v. Retrying in %v", url, err, DialRetrySleep))
+		time.Sleep(DialRetrySleep)
+		log.Get().Warn(fmt.Sprintf("Retrying to connect to mongo, attempt %d of %d", i, DialMaxRetries))
+		s, err = mgo.DialWithInfo(info)
 	}
 
 	return fromSession(s), err
+}
+
+// AddTlsHandler adds the TLS handling logic to a provided `*mgo.DialInfo`
+//
+//    {dialInfo}            - The DialInfo to use
+//    {cert}                - The PEM bytes of the CA cert to use for TLS
+//    {insecureSkipVerify}  - Controls whether a client verifies the server's certificate chain and
+//                            host name. If 'true', TLS accepts any certificate presented by the
+//                            server and any host name in that certificate. In this mode, TLS is
+//                            susceptible to man-in-the-middle attacks.  This should be used only
+//                            for testing.
+//
+func AddTlsHandler(dialInfo *mgo.DialInfo, cert []byte, insecureSkipVerify bool) {
+	rootCerts := x509.NewCertPool()
+	rootCerts.AppendCertsFromPEM(cert)
+
+	dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
+		conn, err := tls.Dial("tcp", addr.String(), &tls.Config{
+			RootCAs:            rootCerts,
+			InsecureSkipVerify: insecureSkipVerify,
+		})
+		if err != nil {
+			log.Get().Error("An error has occurred while dialing with TLS, ", err)
+		}
+		return conn, err
+	}
+}
+
+// ParseURL parses a MongoDB URL as accepted by the Dial function and returns
+// a value suitable for providing into DialWithInfo.
+//
+// See Dial for more details on the format of url.
+func ParseURL(url string) (*mgo.DialInfo, error) {
+	return mgo.ParseURL(url)
 }
 
 // IsDup returns whether err informs of a duplicate key error because
