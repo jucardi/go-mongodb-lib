@@ -1,7 +1,10 @@
 package mgo
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/jucardi/go-mongodb-lib/log"
@@ -50,6 +53,51 @@ func DialWithTimeout(url string, timeout time.Duration) (ISession, error) {
 // DialWithInfo establishes a new session to the cluster identified by info.
 func DialWithInfo(info *mgo.DialInfo) (ISession, error) {
 	s, err := mgo.DialWithInfo(info)
+
+	for i := 1; err != nil && i <= Config().DialMaxRetries; i++ {
+		log.Get().Error(fmt.Sprintf("Can't connect to mongo on '%v': %v. Retrying in %v", info.Addrs, err, Config().DialRetryTimeout))
+		time.Sleep(Config().DialRetryTimeout)
+		log.Get().Warn(fmt.Sprintf("Retrying to connect to mongo, attempt %d of %d", i, Config().DialMaxRetries))
+		s, err = mgo.DialWithInfo(info)
+	}
+
+	return fromSession(s), err
+}
+
+// DialWithTls attempts to establish a MongoDB connection using TLS with the provided PEM encoded
+// certificate.
+func DialWithTls(url string, cert []byte) (ISession, error) {
+	rootCerts := x509.NewCertPool()
+	rootCerts.AppendCertsFromPEM(cert)
+
+	// --sslPEMKeyFile
+	var clientCerts []tls.Certificate
+	if cert, err := tls.LoadX509KeyPair("client.crt", "client.key"); err == nil {
+		clientCerts = append(clientCerts, cert)
+	}
+
+	// TLS dialer handler
+	fn := func() (*mgo.Session, error) {
+		return mgo.DialWithInfo(&mgo.DialInfo{
+			Addrs: []string{url},
+			DialServer: func(addr *mgo.ServerAddr) (net.Conn, error) {
+				return tls.Dial("tcp", addr.String(), &tls.Config{
+					RootCAs:      rootCerts,
+					Certificates: clientCerts,
+				})
+			},
+		})
+	}
+	// Dial with TLS
+	s, err := fn()
+
+	for i := 1; err != nil && i <= Config().DialMaxRetries; i++ {
+		log.Get().Error(fmt.Sprintf("Can't connect to mongo on '%s': %v. Retrying in %v", url, err, Config().DialRetryTimeout))
+		time.Sleep(Config().DialRetryTimeout)
+		log.Get().Warn(fmt.Sprintf("Retrying to connect to mongo, attempt %d of %d", i, Config().DialMaxRetries))
+		s, err = fn()
+	}
+
 	return fromSession(s), err
 }
 

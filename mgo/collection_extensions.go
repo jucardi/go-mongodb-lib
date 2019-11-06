@@ -2,6 +2,7 @@ package mgo
 
 import (
 	"fmt"
+
 	"github.com/jucardi/go-mongodb-lib/log"
 )
 
