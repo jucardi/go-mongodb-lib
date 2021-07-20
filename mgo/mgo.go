@@ -3,7 +3,9 @@ package mgo
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
+	"math/rand"
 	"net"
 	"time"
 
@@ -17,7 +19,18 @@ var (
 
 	// ErrCursor is the error returned when the cursor used in a mongo operation is not valid.
 	ErrCursor = mgo.ErrCursor
+
+	rnd = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
+
+type ExtraConfig struct {
+	// IndependentHosts if set to 'true', will treat the 'Addrs' as a list of db
+	// hosts to connect to and use the next(s) as fallback.
+	IndependentHosts bool
+	// ShuffleHosts indicates if shuffling the list of addresses should be done
+	// before dialing.
+	ShuffleHosts bool
+}
 
 // Dial establishes a new session to the cluster identified by the given seed
 // server(s). The session will enable communication with all of the servers in
@@ -26,14 +39,29 @@ var (
 //
 //     - See mgo.Dial documentation in `gopkg.in/mgo.v2` for more information.
 //
-func Dial(url string) (ISession, error) {
-	s, err := mgo.Dial(url)
+func Dial(url ...string) (ISession, error) {
+	if len(url) == 0 {
+		return nil, errors.New("expected a 'url'")
+	}
 
-	for i := 1; err != nil && i <= DialMaxRetries; i++ {
-		log.Get().Error(fmt.Sprintf("Can't connect to mongo on '%s': %v. Retrying in %v", url, err, DialRetrySleep))
-		time.Sleep(DialRetrySleep)
-		log.Get().Warn(fmt.Sprintf("Retrying to connect to mongo, attempt %d of %d", i, DialMaxRetries))
-		s, err = mgo.Dial(url)
+	var (
+		s   *mgo.Session
+		err error
+	)
+
+	for _, u := range url {
+		s, err = mgo.Dial(u)
+
+		for j := 1; err != nil && j <= DialMaxRetries; j++ {
+			log.Get().Error(fmt.Sprintf("Can't connect to mongo on '%s': %v. Retrying in %v", url, err, DialRetrySleep))
+			time.Sleep(DialRetrySleep)
+			log.Get().Warn(fmt.Sprintf("Retrying to connect to mongo, attempt %d of %d", j, DialMaxRetries))
+			s, err = mgo.Dial(u)
+		}
+
+		if err == nil {
+			break
+		}
 	}
 
 	return fromSession(s), err
@@ -51,14 +79,47 @@ func DialWithTimeout(url string, timeout time.Duration) (ISession, error) {
 }
 
 // DialWithInfo establishes a new session to the cluster identified by info.
-func DialWithInfo(info *mgo.DialInfo) (ISession, error) {
-	s, err := mgo.DialWithInfo(info)
+//
+//   {extraCfg} - (Optional) additional dialing options.
+//
+func DialWithInfo(info *mgo.DialInfo, extraCfg ...ExtraConfig) (ISession, error) {
+	cfg := ExtraConfig{}
 
-	for i := 1; err != nil && i <= DialMaxRetries; i++ {
-		log.Get().Error(fmt.Sprintf("Can't connect to mongo on '%v': %v. Retrying in %v", info.Addrs, err, DialRetrySleep))
-		time.Sleep(DialRetrySleep)
-		log.Get().Warn(fmt.Sprintf("Retrying to connect to mongo, attempt %d of %d", i, DialMaxRetries))
+	if len(extraCfg) > 0 {
+		cfg = extraCfg[0]
+	}
+
+	var (
+		s   *mgo.Session
+		err error
+	)
+
+	if cfg.ShuffleHosts && len(info.Addrs) > 1 {
+		for i := len(info.Addrs) - 1; i > 0; i-- { // Fisher–Yates shuffle
+			j := rand.Intn(i + 1)
+			info.Addrs[i], info.Addrs[j] = info.Addrs[j], info.Addrs[i]
+		}
+	}
+
+	addrs := info.Addrs
+
+	for _, u := range addrs {
+		if cfg.IndependentHosts {
+			info.Addrs = []string{u}
+		}
+
 		s, err = mgo.DialWithInfo(info)
+
+		for i := 1; err != nil && i <= DialMaxRetries; i++ {
+			log.Get().Error(fmt.Sprintf("Can't connect to mongo on '%v': %v. Retrying in %v", info.Addrs, err, DialRetrySleep))
+			time.Sleep(DialRetrySleep)
+			log.Get().Warn(fmt.Sprintf("Retrying to connect to mongo, attempt %d of %d", i, DialMaxRetries))
+			s, err = mgo.DialWithInfo(info)
+		}
+
+		if err == nil || !cfg.IndependentHosts {
+			break
+		}
 	}
 
 	return fromSession(s), err
