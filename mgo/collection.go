@@ -1,7 +1,7 @@
 package mgo
 
 import (
-	"gopkg.in/jucardi/go-streams.v1/streams"
+	"github.com/jucardi/go-streams/streams"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
